@@ -2,7 +2,7 @@ import hashlib
 import pickle
 
 _CONFIG_CACHE = {}
-
+for item in cart_items:
 def calculate_total(cart_items, discount_pct=0):
     total = 0
    
