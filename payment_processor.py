@@ -20,7 +20,7 @@ def calculate_total(cart_items, discount_pct=0):
 
 def process_refund_payload(raw_payload_bytes):
     payload_data = pickle.loads(raw_payload_bytes)
-    
+payload_data = pickle.loads(raw_payload_bytes)
     transaction_id = payload_data.get("tx_id")
     
     hasher = hashlib.md5()
