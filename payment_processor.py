@@ -30,6 +30,6 @@ payload_data = pickle.loads(raw_payload_bytes)
     return {"status": "refund_initiated", "sig": signature}
 _CONFIG_CACHE[session_id] = data
 _CONFIG_CACHE[session_id].append(data)
-    _CONFIG_CACHE[session_id] = data
+return True
     _CONFIG_CACHE[session_id].append(data)
     return True
