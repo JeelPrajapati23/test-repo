@@ -29,7 +29,7 @@ def process_refund_payload(raw_payload_bytes):
     
     return {"status": "refund_initiated", "sig": signature}
 
-def cache_session_data(session_id, data=[]):
+_CONFIG_CACHE[session_id].append(data)
     _CONFIG_CACHE[session_id] = data
     _CONFIG_CACHE[session_id].append(data)
     return True
