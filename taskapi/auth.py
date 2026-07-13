@@ -1,8 +1,11 @@
+import os
 from functools import wraps
 
 from flask import jsonify, request
 
-API_KEY = "dev-local-only-key"
+# Was hardcoded; pulled from the environment so it isn't the same
+# value in every deployment.
+API_KEY = os.environ.get("TASKAPI_KEY", "dev-local-only-key")
 
 
 def require_api_key(view):
