@@ -62,3 +62,35 @@ def test_delete_task(client):
 
     resp = client.get(f"/tasks/{task_id}", headers=HEADERS)
     assert resp.status_code == 404
+
+
+def test_search_by_title(client):
+    client.post("/tasks", json={"title": "Write tests", "tag": "work"}, headers=HEADERS)
+    client.post("/tasks", json={"title": "Buy milk", "tag": "home"}, headers=HEADERS)
+
+    resp = client.get("/tasks/search?q=Write", headers=HEADERS)
+    assert resp.status_code == 200
+    titles = [t["title"] for t in resp.get_json()]
+    assert "Write tests" in titles
+
+
+def test_search_by_tag(client):
+    client.post("/tasks", json={"title": "Write tests", "tag": "work"}, headers=HEADERS)
+    client.post("/tasks", json={"title": "Buy milk", "tag": "home"}, headers=HEADERS)
+
+    resp = client.get("/tasks/search?tag=work", headers=HEADERS)
+    assert resp.status_code == 200
+    tags = {t["tag"] for t in resp.get_json()}
+    assert tags == {"work"}
+
+
+def test_export_returns_csv(client):
+    client.post("/tasks", json={"title": "Write tests", "tag": "work"}, headers=HEADERS)
+    client.post("/tasks", json={"title": "Buy milk", "tag": "home"}, headers=HEADERS)
+
+    resp = client.get("/tasks/export", headers=HEADERS)
+    assert resp.status_code == 200
+    assert resp.mimetype == "text/csv"
+    body = resp.get_data(as_text=True)
+    assert "Write tests" in body
+    assert "Buy milk" in body

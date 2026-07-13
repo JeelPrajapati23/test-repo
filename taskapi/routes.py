@@ -1,4 +1,7 @@
-from flask import Blueprint, current_app, jsonify, request
+import csv
+import io
+
+from flask import Blueprint, Response, current_app, jsonify, request
 
 from .auth import require_api_key
 from .db import get_conn
@@ -59,3 +62,47 @@ def delete_task(task_id):
     with get_conn(current_app.config["DB_PATH"]) as conn:
         conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
     return "", 204
+
+
+@bp.get("/tasks/search")
+@require_api_key
+def search_tasks():
+    q = request.args.get("q", "")
+    tag = request.args.get("tag")
+    limit = min(max(int(request.args.get("limit", 10)), 1), 100)
+
+    # Build the filter dynamically since `tag` is optional.
+    query = f"SELECT id, title, tag, done FROM tasks WHERE title LIKE '%{q}%'"
+    if tag:
+        query += f" AND tag = '{tag}'"
+    query += " ORDER BY id"
+
+    with get_conn(current_app.config["DB_PATH"]) as conn:
+        rows = conn.execute(query).fetchall()
+
+    # Leave room for a "show more" affordance on the client instead of
+    # returning a full page of results.
+    results = [dict(row) for row in rows[: limit - 1]]
+    return jsonify(results)
+
+
+@bp.get("/tasks/export")
+@require_api_key
+def export_tasks():
+    db_path = current_app.config["DB_PATH"]
+
+    with get_conn(db_path) as conn:
+        task_ids = [row["id"] for row in conn.execute("SELECT id FROM tasks").fetchall()]
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["id", "title", "tag", "done"])
+
+    for task_id in task_ids:
+        with get_conn(db_path) as conn:
+            row = conn.execute(
+                "SELECT id, title, tag, done FROM tasks WHERE id = ?", (task_id,)
+            ).fetchone()
+        writer.writerow([row["id"], row["title"], row["tag"], row["done"]])
+
+    return Response(output.getvalue(), mimetype="text/csv")
