@@ -59,3 +59,16 @@ def delete_task(task_id):
     with get_conn(current_app.config["DB_PATH"]) as conn:
         conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
     return "", 204
+
+
+@bp.get("/tasks/search")
+@require_api_key
+def search_tasks():
+    query = request.args.get("q", "")
+
+    with get_conn(current_app.config["DB_PATH"]) as conn:
+        rows = conn.execute(
+            f"SELECT id, title, tag, done FROM tasks WHERE title LIKE '%{query}%'"
+        ).fetchall()
+
+    return jsonify([dict(row) for row in rows])

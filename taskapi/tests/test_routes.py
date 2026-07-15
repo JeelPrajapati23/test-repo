@@ -53,6 +53,17 @@ def test_requires_api_key(client):
     assert resp.status_code == 401
 
 
+def test_search_tasks(client):
+    client.post("/tasks", json={"title": "Write tests", "tag": "work"}, headers=HEADERS)
+    client.post("/tasks", json={"title": "Buy milk", "tag": "home"}, headers=HEADERS)
+
+    resp = client.get("/tasks/search?q=Write", headers=HEADERS)
+    assert resp.status_code == 200
+    results = resp.get_json()
+    assert len(results) == 1
+    assert results[0]["title"] == "Write tests"
+
+
 def test_delete_task(client):
     resp = client.post("/tasks", json={"title": "temp"}, headers=HEADERS)
     task_id = resp.get_json()["id"]
